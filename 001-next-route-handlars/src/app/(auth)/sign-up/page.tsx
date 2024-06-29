@@ -1,13 +1,16 @@
 "use client";
 import {
-  UserInfoType,
-  UserInfoValidateSchema,
+  SignUpUser,
+  SignUpUserValidateSchema,
 } from "@/validation/formValidation";
+import { useRouter } from "next/navigation";
 import React, { ChangeEvent, useState } from "react";
 
 function Page() {
-  const defaultValue: UserInfoType = { username: "", password: "", email: "" };
-  const [userInfo, setUserInfo] = useState<UserInfoType>(defaultValue);
+  const router = useRouter();
+
+  const defaultValue: SignUpUser = { username: "", password: "", email: "" };
+  const [userInfo, setUserInfo] = useState<SignUpUser>(defaultValue);
 
   const handleInputChange = (e: any) => {
     const { name, value } = e.target;
@@ -21,23 +24,27 @@ function Page() {
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    try {
+      const zodResponse = SignUpUserValidateSchema.safeParse(userInfo);
+      if (zodResponse.success) {
+        const result = await fetch("http://localhost:3000/api/users/sign-up", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userInfo),
+        });
 
-    const zodResponse = UserInfoValidateSchema.safeParse(userInfo);
-    if (zodResponse.success) {
-      const result = await fetch("http://localhost:3000/api/form", {
-        method: "POST",
-        headers: {
-          contentType: "application/json",
-        },
-        body: JSON.stringify(userInfo),
-      });
+        const data = await result.json();
+        console.log(data);
 
-      const data = await result.json();
-      console.log(data);
-
-      setUserInfo(defaultValue);
-    } else {
-      console.log(zodResponse.error);
+        setUserInfo(defaultValue);
+        router.push("/sign-in");
+      } else {
+        console.log(zodResponse.error);
+      }
+    } catch (err) {
+      if (err) console.log(err);
     }
   };
   return (
@@ -90,7 +97,7 @@ function Page() {
           type="submit"
           className="py-2 px-8 bg-blue-500 rounded-full text-white text-2xl"
         >
-          Login
+          Register
         </button>
       </form>
     </div>
